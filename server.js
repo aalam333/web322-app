@@ -7,7 +7,7 @@ Name: Afra Alam
 Student ID: 111459236
 Date: 10/9/2024
 Vercel Web App URL: 
-GitHub Repository URL: 
+GitHub Repository URL: https://github.com/aalam333/web322-app.git
 
 ********************************************************************************/ 
 // EXPRESS

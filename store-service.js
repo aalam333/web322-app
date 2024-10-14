@@ -7,31 +7,33 @@ categories_data = fs.readFile('./data/categories.json', 'utf8', (err, data) => {
 const items = [];
 const categories = [];
 
+// Functions for initialization...
+
 function initialize(){
-    return new Promise((resolve, reject) => {
-        try{
-            items = items_data.map((item) => {
-                const category = categories_data.find((category) => category.id === item.category);
-                return {
-                  ...item,
-                  category: category ? category.name : "Unknown",
-                };
-              });
-            resolve;
-        } catch (error) {
-            reject("Initialization failed: " + error);
-        }
-    });
+  return new Promise(async (resolve, reject) => {
+    try {
+      let items = await JSON.parse(items_data);
+      console.log(items);
+  
+      let categories = await JSON.parse(categories_data);
+      console.log(categories);
+
+      resolve(items, categories);
+
+    } catch(error) {
+      reject("Initialization failed: " + error);
+    }
+  });
 }
 
 function getAllItems(){
-    return new Promise((resolve, reject) => {
-        if (items.length > 0) {
-          resolve(items);
-        } else {
-          reject("No results returned.");
-        }
-    });
+  return new Promise((resolve, reject) => {
+      if (items.length > 0) {
+        resolve(items);
+      } else {
+        reject("No results returned.");
+      }
+  });
 }
 
 function getPublishedItems(){
