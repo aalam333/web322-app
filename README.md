@@ -6,3 +6,5 @@
 <p>There's the <b>views</b> folder that contain all the <b>html</b> files.</p>
 
 <p>There's the <b>data</b> folder that contain all the <b>JSON</b> files for all the data for this project.</p>
+
+<p>That's all for now.</p>
