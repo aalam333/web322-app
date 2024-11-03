@@ -14,12 +14,26 @@ GitHub Repository URL: https://github.com/aalam333/web322-app.git
 const express = require('express'); // express
 const store_service = require("./store-service"); // store-service
 const path = require("path"); // path
+const multer = require("multer"); //multer
+const cloudinary = require('cloudinary').v2 //cloudinary
+const streamifier = require('streamifier') //streamifier
+
+/** CONFIGURING CLOUDINARY **/
+cloudinary.config({
+    cloud_name: 'dispkzao5 ',
+    api_key: '226132266464889',
+    api_secret: 'lxldJCCRzGZ819b3LTbncTa9JBA',
+    secure: true
+});
+
+const uploadM = multer(); // no { storage: storage } since we are not using disk storage
 
 const app = express(); // define app
 
 const HTTP_PORT = process.env.PORT || 8080; // assign to port 8080
 
 app.use(express.static('public')); // getting files from public
+
 
 /** ROUTING **/
 // MAIN PAGE
@@ -63,6 +77,44 @@ app.get('/categories', (req,res)=>{
 app.get('/items/add', (req,res)=>{
     res.sendFile(path.join(__dirname, "/views/addItem.html"))
 });
+
+// ADD ITEMS POST - *NEW*
+if(req.file){
+    let streamUpload = (req) => {
+        return new Promise((resolve, reject) => {
+            let stream = cloudinary.uploader.upload_stream(
+                (error, result) => {
+                    if (result) {
+                        resolve(result);
+                    } else {
+                        reject(error);
+                    }
+                }
+            );
+
+            streamifier.createReadStream(req.file.buffer).pipe(stream);
+        });
+    };
+
+    async function upload(req) {
+        let result = await streamUpload(req);
+        console.log(result);
+        return result;
+    }
+
+    upload(req).then((uploaded)=>{
+        processItem(uploaded.url);
+    });
+}else{
+    processItem("");
+}
+ 
+function processItem(imageUrl){
+    req.body.featureImage = imageUrl;
+
+    // TODO: Process the req.body and add it as a new Item before redirecting to /items
+} 
+
 
 // 404 PAGE NOT FOUND
 app.use((req,res)=>{

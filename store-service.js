@@ -42,28 +42,37 @@ function initialize() {
 
 // GETALLITEMS
 function getAllItems(){
-    return new Promise((resolve,reject)=>{
+    return new Promise((resolve, reject)=>{
         (posts.length > 0 ) ? resolve(posts) : reject("no results returned"); 
     });
 }
 
-//GETPUBLISHEDITEMS
+// GETPUBLISHEDITEMS
 function getPublishedItems(){
-    return new Promise((resolve,reject)=>{
+    return new Promise((resolve, reject)=>{
         (items.length > 0) ? resolve(items.filter(item => items.published)) : reject("no results returned");
     });
 }
 
-//GETCATEGORIES
+// GETCATEGORIES
 function getCategories(){
-    return new Promise((resolve,reject)=>{
+    return new Promise((resolve, reject)=>{
         (categories.length > 0 ) ? resolve(categories) : reject("no results returned"); 
     });
 }
 
+// ADDITEM
+function addItem(){
+    return new Promise((resolve, reject)=>{
+        
+    })
+}
+
+/** EXPORTING THE MODULES **/
 module.exports = {
     initialize,
     getAllItems,
     getPublishedItems,
     getCategories,
+    addItem,
 };
