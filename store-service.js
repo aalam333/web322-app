@@ -1,61 +1,63 @@
-const fs = require("fs"); // required at the top of your module
+/*********************************************************************************
+WEB322 – Assignment 02
+I declare that this assignment is my own work in accordance with Seneca Academic Policy.  
+No part of this assignment has been copied manually or electronically from any other source (including 3rd party web sites) or distributed to other students.
 
-items_data = fs.readFile('./data/items.json', 'utf8', (err, data) => { if (err) throw err; console.log(data);});
-categories_data = fs.readFile('./data/categories.json', 'utf8', (err, data) => { if (err) throw err; console.log(data);});
+Name: Afra Alam
+Student ID: 111459236
+Date: 10/9/2024
+Vercel Web App URL: 
+GitHub Repository URL: https://github.com/aalam333/web322-app.git
 
+********************************************************************************/ 
+// REQUIRE MODULE FS
+const fs = require("fs");
 
-const items = [];
-const categories = [];
+// CREATE EMPTY ARRAYS FOR POSTS AND CATEGORIES
+let posts = [];
+let categories = [];
 
-// Functions for initialization...
-
-function initialize(){
-  return new Promise(async (resolve, reject) => {
-    try {
-      let items = await JSON.parse(items_data);
-      console.log(items);
-  
-      let categories = await JSON.parse(categories_data);
-      console.log(categories);
-
-      resolve(items, categories);
-
-    } catch(error) {
-      reject("Initialization failed: " + error);
-    }
-  });
-}
-
-function getAllItems(){
-  return new Promise((resolve, reject) => {
-      if (items.length > 0) {
-        resolve(items);
-      } else {
-        reject("No results returned.");
-      }
-  });
-}
-
-function getPublishedItems(){
+/** MODULES **/
+// INITIALIZE
+function initialize() {
     return new Promise((resolve, reject) => {
-        const published_items = items.filter((item) =>
-            item.published === true,
-          );
-        if (published_items.length > 0) {
-          resolve(published_items);
-        } else {
-          reject("No results returned.");
-        }
+        fs.readFile('./data/items.json', 'utf8', (err, data) => {
+            if (err) {
+                reject(err);
+            } else {
+                posts = JSON.parse(data);
+
+                fs.readFile('./data/categories.json', 'utf8', (err, data) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        categories = JSON.parse(data);
+                        resolve();
+                    }
+                });
+            }
+        });
     });
 }
 
+// GETALLITEMS
+function getAllItems(){
+    return new Promise((resolve,reject)=>{
+        (posts.length > 0 ) ? resolve(posts) : reject("no results returned"); 
+    });
+}
+
+//GETPUBLISHEDITEMS
+function getPublishedItems(){
+    return new Promise((resolve,reject)=>{
+        (items.length > 0) ? resolve(items.filter(item => items.published)) : reject("no results returned");
+    });
+}
+
+//GETCATEGORIES
 function getCategories(){
-    return new Promise((resolve, reject) => {
-        if (categories.length > 0) {
-          resolve(categories);
-        } else {
-          reject("No results returned.");
-        }
+    return new Promise((resolve,reject)=>{
+        (categories.length > 0 ) ? resolve(categories) : reject("no results returned"); 
     });
 }
 
@@ -64,4 +66,4 @@ module.exports = {
     getAllItems,
     getPublishedItems,
     getCategories,
-  };
+};

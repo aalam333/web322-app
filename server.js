@@ -10,86 +10,70 @@ Vercel Web App URL:
 GitHub Repository URL: https://github.com/aalam333/web322-app.git
 
 ********************************************************************************/ 
-// EXPRESS
-const express = require('express'); // express requirement
+/** REQUIRING MODULES **/
+const express = require('express'); // express
+const store_service = require("./store-service"); // store-service
+const path = require("path"); // path
 
-// STORE-SERVICE
-const store_service = require("./store-service");
+const app = express(); // define app
 
-const path = require('path');
+const HTTP_PORT = process.env.PORT || 8080; // assign to port 8080
 
-const app = express(); // obtain the "app" object
-const HTTP_PORT = process.env.PORT || 8080; // assign a port
+app.use(express.static('public')); // getting files from public
 
-
-app.use((req, res, next) => {
-    if (!store_service.getAllItems) {
-      store_service
-        .initialize()
-        .then(() => {
-          next();
-        })
-        .catch((error) => {
-          console.error("Initialization Failed:", error);
-          res.status(500).send("Internal Server Error");
-        });
-    } else {
-      next();
-    }
-  });
-
-// ROUTES
-// "/" AND "/about"
+/** ROUTING **/
+// MAIN PAGE
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '/views/about.html'));
+    res.redirect("/about");
 });
 
+// ABOUT
 app.get('/about', (req, res) => {
-    res.sendFile(path.join(__dirname, '/views/about.html'));
+    res.sendFile(path.join(__dirname, "/views/about.html"))
 });
 
-// "/shop"
-app.get('/shop', (req, res) => {
-    store_service
-    .getPublishedItems()
-    .then((items) => {
-        res.json(items);
-    })
-    .catch((error) => {
-        console.error("Error getting published items:", error);
-        res.status(500).send("Internal Server Error");
-    })
-});
-
-// "/items"
-app.get('/items', (req, res) => {
-    store_service
-    .getAllItems()
-    .then((items) => {
-      res.json(items);
-    })
-    .catch((error) => {
-      console.error("Error getting items:", error);
-      res.status(500).send("Internal Server Error");
+// STORE
+app.get('/store', (req,res)=>{
+    store_service.getPublishedItems().then((data=>{
+        res.json(data);
+    })).catch(err=>{
+        res.json({message: err});
     });
 });
 
-// "/categories"
-app.get('/categories', (req, res) => {
-    store_service
-    .getCategories()
-    .then((categories) => {
-      res.json(categories);
-    })
-    .catch((error) => {
-      console.error("Error getting categories:", error);
-      res.status(500).send("Internal Server Error");
+// ITEMS
+app.get('/items', (req,res)=>{
+    store_service.getAllItems().then((data=>{
+        res.json(data);
+    })).catch(err=>{
+        res.json({message: err});
     });
 });
 
-app.use((req, res, next) => {
-    res.status(404).send("404 - We're unable to find what you're looking for.");
+// CATEGORIES
+app.get('/categories', (req,res)=>{
+    store_service.getCategories().then((data=>{
+        res.json(data);
+    })).catch(err=>{
+        res.json({message: err});
+    });
 });
 
-// Listening on port 8080...
-app.listen(HTTP_PORT, () => console.log(`Express http server listening on ${HTTP_PORT}`)); 
+// ADD ITEMS - *NEW*
+app.get('/items/add', (req,res)=>{
+    res.sendFile(path.join(__dirname, "/views/addItem.html"))
+});
+
+// 404 PAGE NOT FOUND
+app.use((req,res)=>{
+    res.status(404).send("404 - Page Not Found")
+})
+
+//INITIALIZE THEN LISTEN
+store_service.initialize().then(()=>{
+    app.listen(HTTP_PORT, () => { 
+        console.log('server listening on: ' + HTTP_PORT); 
+    });
+}).catch((err)=>{
+    console.log(err);
+})
