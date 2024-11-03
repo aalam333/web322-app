@@ -62,9 +62,16 @@ function getCategories(){
 }
 
 // ADDITEM
-function addItem(){
+function addItem(itemData){
     return new Promise((resolve, reject)=>{
-        
+        try{
+            (itemData.published === null) ? itemData.published = false : itemData.published = true;
+            itemData.id = posts.length + 1;
+            posts.push(itemData);
+            resolve(itemData);
+        }catch(err){
+            reject(err);
+        }
     })
 }
 
