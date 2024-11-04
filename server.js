@@ -6,7 +6,7 @@ No part of this assignment has been copied manually or electronically from any o
 Name: Afra Alam
 Student ID: 111459236
 Date: 10/9/2024
-Vercel Web App URL: 
+Vercel Web App URL: https://web322-app-flax.vercel.app/
 GitHub Repository URL: https://github.com/aalam333/web322-app.git
 
 ********************************************************************************/ 
