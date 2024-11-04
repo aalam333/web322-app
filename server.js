@@ -26,7 +26,7 @@ cloudinary.config({
     secure: true
 });
 
-const uploadM = multer(); // no { storage: storage } since we are not using disk storage
+const fileUpload = multer(); // no { storage: storage } since we are not using disk storage
 
 const app = express(); // define app
 
@@ -79,7 +79,7 @@ app.get('/items/add', (req,res)=>{
 });
 
 // ADD ITEMS POST - *NEW*
-app.post('/items/add', (req,res)=>{
+app.post('/items/add', fileUpload.single('image'), (req, res) => {
     if(req.file){
         let streamUpload = (req) => {
             return new Promise((resolve, reject) => {
@@ -114,9 +114,14 @@ app.post('/items/add', (req,res)=>{
         req.body.featureImage = imageUrl;
     
         // TODO: Process the req.body and add it as a new Item before redirecting to /items
+        store_service.addItem(req.body).then(
+            res.send({ body: req.body, file: req.file}),
+            res.redirect(301, path.join(__dirname, "/views/about.html"))
+        ).catch(err=>{
+            res.json({message: err});
+        })
     } 
 });
-
 
 // 404 PAGE NOT FOUND
 app.use((req,res)=>{
