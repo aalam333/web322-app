@@ -32,7 +32,6 @@ const app = express(); // define app
 
 const HTTP_PORT = process.env.PORT || 8080; // assign to port 8080
 
-app.set('view engine', 'ejs');
 app.set('views', __dirname + '/views');
 
 app.use(express.static(path.join(__dirname, 'public'))); // getting files from public
