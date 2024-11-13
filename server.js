@@ -20,7 +20,7 @@ const streamifier = require('streamifier') //streamifier
 
 /** CONFIGURING CLOUDINARY **/
 cloudinary.config({
-    cloud_name: 'dispkzao5 ',
+    cloud_name: 'dispkzao5',
     api_key: '226132266464889',
     api_secret: 'lxldJCCRzGZ819b3LTbncTa9JBA',
     secure: true
