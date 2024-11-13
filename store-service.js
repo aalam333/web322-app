@@ -51,16 +51,45 @@ function getCategories(){
 
 // ADDITEM
 function addItem(itemData){
-    return new Promise((resolve, reject)=>{
-        try{
-            (itemData.published === null) ? itemData.published = false : itemData.published = true;
-            itemData.id = posts.length + 1;
-            posts.push(itemData);
-            resolve(itemData);
-        }catch(err){
-            reject(err);
+    return new Promise((resolve,reject)=>{
+        // check if published is true or not. 
+        itemData.published = itemData.published ? true : false;
+
+        // increase the Id by 1, for our 'index'
+        itemData.id = items.length + 1;
+
+        // push the item to the dataStore
+        items.push(itemData);
+
+        // resolve the promise
+        resolve();
+    });
+}
+
+//GETITEMSBYCATEGORY
+function getItemsByCategory(category){
+    return new Promise((resolve,reject)=>{
+        let filteredItems = items.filter(post=>post.category == category);
+
+        if(filteredItems.length == 0){
+            reject("no results returned")
+        }else{
+            resolve(filteredItems);
         }
-    })
+    });
+}
+
+//GETITEMSBYMINDATE
+function getItemsByMinDate(minDateStr){
+    return new Promise((resolve, reject) => {
+        let filteredItems = items.filter(post => (new Date(post.postDate)) >= (new Date(minDateStr)))
+
+        if (filteredItems.length == 0) {
+            reject("no results returned")
+        } else {
+            resolve(filteredItems);
+        }
+    });
 }
 
 /** EXPORTING THE MODULES **/
@@ -70,4 +99,6 @@ module.exports = {
     getPublishedItems,
     getCategories,
     addItem,
+    getItemsByCategory,
+    getItemsByMinDate
 };
