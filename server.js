@@ -34,6 +34,7 @@ const HTTP_PORT = process.env.PORT || 8080; // assign to port 8080
 
 app.use(express.static(path.join(__dirname, 'public'))); // getting files from public
 
+app.set('views', __dirname + '/views');
 
 /** ROUTING **/
 // MAIN PAGE
