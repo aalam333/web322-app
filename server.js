@@ -26,11 +26,11 @@ cloudinary.config({
     secure: true
 });
 
-app.set('views', __dirname + '/views');
-
 const upload = multer(); // no { storage: storage } since we are not using disk storage
 
 const app = express(); // define app
+
+app.set('views', __dirname + '/views');
 
 const HTTP_PORT = process.env.PORT || 8080; // assign to port 8080
 
