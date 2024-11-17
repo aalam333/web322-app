@@ -92,6 +92,17 @@ function getItemsByMinDate(minDateStr){
     });
 }
 
+//GETPUBLISHEDITEMSBYCATEGORY
+function getPublishedItemsByCategory(category){
+    return new Promise((resolve, reject)=>{
+        if(items.length > 0 && items.category == category){
+            resolve(items.filter(item => items.published && items.categories == category));
+        }else{
+            reject("no results returned");
+        }
+    });
+}
+
 /** EXPORTING THE MODULES **/
 module.exports = {
     initialize,
@@ -100,5 +111,6 @@ module.exports = {
     getCategories,
     addItem,
     getItemsByCategory,
-    getItemsByMinDate
+    getItemsByMinDate,
+    getPublishedItemsByCategory,
 };
