@@ -5,100 +5,109 @@ No part of this assignment has been copied manually or electronically from any o
 
 Name: Afra Alam
 Student ID: 111459236
-Date: 10/9/2024
+Date: 12/7/2024
 Vercel Web App URL: https://web322-app-flax.vercel.app/
 GitHub Repository URL: https://github.com/aalam333/web322-app.git
 
-********************************************************************************/ 
+********************************************************************************/
 /** REQUIRING MODULES **/
-const express = require('express'); // express
-const store_service = require("./store-service"); // store-service
+const express = require("express"); // express
+const itemData = require("./store-service"); // store-service
 const path = require("path"); // path
 
 const multer = require("multer"); //multer
-const cloudinary = require('cloudinary').v2; //cloudinary
-const streamifier = require('streamifier'); //streamifier
+const cloudinary = require("cloudinary").v2; //cloudinary
+const streamifier = require("streamifier"); //streamifier
 
-const exphbs = require("express-handlebars"); //handlebars
-const stripJs = require('strip-js'); //strip-js
+// AS4, Setup handlebars
+const exphbs = require("express-handlebars");
+const { Console } = require("console");
 
 /** CONFIGURING CLOUDINARY **/
 cloudinary.config({
-    cloud_name: 'dispkzao5',
-    api_key: '226132266464889',
-    api_secret: 'lxldJCCRzGZ819b3LTbncTa9JBA',
-    secure: true
+  cloud_name: "dispkzao5",
+  api_key: "226132266464889",
+  api_secret: "lxldJCCRzGZ819b3LTbncTa9JBA",
+  secure: true,
 });
 
 const upload = multer(); // no { storage: storage } since we are not using disk storage
 
 const app = express(); // define app
 
-app.set('views', __dirname + '/views');
-
 const HTTP_PORT = process.env.PORT || 8080; // assign to port 8080
 
-app.use(express.static(path.join(__dirname, 'public'))); // getting files from public
+app.use(express.static("public")); // getting files from public
 
-// tell express we are using the HBS engine
-app.engine(".hbs", exphbs.engine({ extname: ".hbs" }));
-app.set("view engine", ".hbs");
-
-const stripJs = require('strip-js');
-
-//active item
-app.use(function(req,res,next){
+//This will add the property "activeRoute" to "app.locals" whenever the route changes, i.e. if our route is "/store/5", the app.locals.activeRoute value will be "/store".  Also, if the shop is currently viewing a category, that category will be set in "app.locals".
+app.use(function (req, res, next) {
   let route = req.path.substring(1);
-  app.locals.activeRoute = "/" + (isNaN(route.split('/')[1]) ? route.replace(/\/(?!.*)/, "") : route.replace(/\/(.*)/, ""));
+
+  app.locals.activeRoute =
+    "/" +
+    (isNaN(route.split("/")[1])
+      ? route.replace(/\/(?!.*)/, "")
+      : route.replace(/\/(.*)/, ""));
+
   app.locals.viewingCategory = req.query.category;
+
   next();
 });
 
-/** HELPER FUNCTIONS**/
-var hbs = exphbs.create({});
+app.use(express.urlencoded({ extended: true }));
 
-hbs.handlebars.registerHelper("navLink", function(url, options) {
-  return (
-    '<li class="nav-item"><a ' +
-    (url == app.locals.activeRoute ? ' class="nav-link active" ' : ' class="nav-link" ') + 
-    ' href="' +
-    url +
-    '">' +
-    options.fn(this) +
-    "</a></li>"
-  );
-})
+// Handlebars Setup
+app.engine(
+  ".hbs",
+  exphbs.engine({
+    extname: ".hbs",
+    helpers: {
+      navLink: function (url, options) {
+        return (
+          '<li class="nav-item"><a ' +
+          (url == app.locals.activeRoute
+            ? ' class="nav-link active" '
+            : ' class="nav-link" ') +
+          ' href="' +
+          url +
+          '">' +
+          options.fn(this) +
+          "</a></li>"
+        );
+      },
+      equal: function (lvalue, rvalue, options) {
+        if (arguments.length < 3)
+          throw new Error("Handlebars Helper equal needs 2 parameters");
+        if (lvalue != rvalue) {
+          return options.inverse(this);
+        } else {
+          return options.fn(this);
+        }
+      },
+      formatDate: function (dateObj) {
+        let year = dateObj.getFullYear();
+        let month = (dateObj.getMonth() + 1).toString();
+        let day = dateObj.getDate().toString();
+        return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+      },
+    },
+  }),
+);
 
-hbs.handlebars.registerHelper("equal", function(lvalue, rvalue, options) {
-  if (arguments.length < 3)
-    throw new Error("Handlebars Helper equal needs 2 parameters");
-  if (lvalue != rvalue) {
-    return options.inverse(this);
-  } else {
-    return options.fn(this);
-  }
-})
-
-hbs.handlebars.registerHelper("safeHTML", function(context){
-  return stripJs(context);
-})
-
+app.set("view engine", ".hbs");
 
 /** ROUTING **/
-// MAIN PAGE
-app.get('/', (req, res) => {
-    res.redirect("/about");
-});
-
 // ABOUT
-app.get('/about', (req, res) => {
-    res.render("about")
-    //res.sendFile(path.join(__dirname, "/views/about.html"))
+app.get("/", (req, res) => {
+  res.redirect("/about");
 });
 
-// STORE
+app.get("/about", (req, res) => {
+  res.render("about");
+});
 
-app.get("/store", async (req, res) => {
+// SHOP
+app.get("/shop", async (req, res) => {
   // Declare an object to store properties for the view
   let viewData = {};
 
@@ -108,15 +117,16 @@ app.get("/store", async (req, res) => {
 
     // if there's a "category" query, filter the returned items by category
     if (req.query.category) {
-      // Obtain the published "item" by category
-      items = await store_service.getPublishedItemsByCategory(req.query.category);
+      // Obtain the published "items" by category
+      console.log("categories");
+      items = await itemData.getPublishedItemsByCategory(req.query.category);
     } else {
       // Obtain the published "items"
-      items = await store_service.getPublishedItems();
+      items = await itemData.getPublishedItems();
     }
 
-    // sort the published items by itemDate
-    items.sort((a, b) => new Date(b.itemDate) - new Date(a.itemDate));
+    // sort the published items by postDate
+    items.sort((a, b) => new Date(b.postDate) - new Date(a.postDate));
 
     // get the latest item from the front of the list (element 0)
     let item = items[0];
@@ -130,7 +140,7 @@ app.get("/store", async (req, res) => {
 
   try {
     // Obtain the full list of "categories"
-    let categories = await store_service.getCategories();
+    let categories = await itemData.getCategories();
 
     // store the "categories" data in the viewData object (to be passed to the view)
     viewData.categories = categories;
@@ -138,85 +148,61 @@ app.get("/store", async (req, res) => {
     viewData.categoriesMessage = "no results";
   }
 
-  // render the "store" view with all of the data (viewData)
-  res.render("store", { data: viewData });
-});
-
-
-app.get('/shop/:id', async (req, res) => {
-
-  // Declare an object to store properties for the view
-  let viewData = {};
-
-  try{
-
-      // declare empty array to hold "item" objects
-      let items = [];
-
-      // if there's a "category" query, filter the returned items by category
-      if(req.query.category){
-          // Obtain the published "items" by category
-          items = await store_service.getPublishedItemsByCategory(req.query.category);
-      }else{
-          // Obtain the published "items"
-          items = await store_service.getPublishedItems();
-      }
-
-      // sort the published items by itemDate
-      items.sort((a,b) => new Date(b.itemDate) - new Date(a.itemDate));
-
-      // store the "items" and "item" data in the viewData object (to be passed to the view)
-      viewData.items = items;
-
-  }catch(err){
-      viewData.message = "no results";
-  }
-
-  try{
-      // Obtain the item by "id"
-      viewData.item = await store_service.getItemById(req.params.id);
-  }catch(err){
-      viewData.message = "no results"; 
-  }
-
-  try{
-      // Obtain the full list of "categories"
-      let categories = await store_service.getCategories();
-
-      // store the "categories" data in the viewData object (to be passed to the view)
-      viewData.categories = categories;
-  }catch(err){
-      viewData.categoriesMessage = "no results"
-  }
-
   // render the "shop" view with all of the data (viewData)
-  res.render("shop", {data: viewData})
+  res.render("shop", { data: viewData });
 });
 
-// ITEMS
-app.get('/items', (req,res)=>{
-    store_service.getAllItems().then((data=>{
-      res.render("items", {items: data})
-    })).catch(err=>{
-      res.render("items", {message: "no results"});
+// Accept queryStrings
+app.get("/items", (req, res) => {
+  if (req.query.category) {
+    itemData
+      .getItemsByCategory(req.query.category)
+      .then((data) => {
+        if (data.length > 0) {
+          res.render("items", { items: data });
+        } else {
+          res.render("Items", { message: "no results" });
+        }
+      })
+      .catch((err) => {
+        res.render("items", { message: "no results" });
+      });
+  } else if (req.query.minDate) {
+    itemData.getItemsByMinDate(req.query.minDate).then((data) => {
+      if (data.length > 0) {
+        res.render("items", { items: data });
+      } else {
+        res.render("items", { message: "no results" });
+      }
+    });
+  } else {
+    itemData
+      .getAllItems()
+      .then((data) => {
+        if (data.length > 0) {
+          res.render("items", { items: data });
+        } else {
+          res.render("items", { message: "no results" });
+        }
+      })
+      .catch((err) => {
+        res.render("items", { message: "no results" });
+      });
+  }
+});
+
+// A route for items/add
+app.get("/items/add", (req, res) => {
+  itemData
+    .getCategories()
+    .then((data) => {
+      res.render("addItem", { categories: data });
+    })
+    .catch((err) => {
+      res.render("addItem", { categories: [] });
     });
 });
 
-// CATEGORIES
-app.get('/categories', (req,res)=>{
-    store_service.getCategories().then((data=>{
-      res.render("categories", {categories: data});
-    })).catch(err=>{
-      res.render("categories", {message: "no results"});
-    });
-});
-
-// ADD ITEMS - *NEW*
-app.get('/items/add', (req,res)=>{
-    res.render("addItem")
-});
-
-// ADD ITEMS POST - *NEW*
 app.post("/items/add", upload.single("featureImage"), (req, res) => {
   if (req.file) {
     let streamUpload = (req) => {
@@ -263,25 +249,131 @@ app.post("/items/add", upload.single("featureImage"), (req, res) => {
   }
 });
 
-// Get an individual item
-app.get('/item/:id', (req,res)=>{
-    itemData.getItemById(req.params.id).then(data=>{
-        res.json(data);
-    }).catch(err=>{
-        res.json({message: err});
+app.get("/items/delete/:id", (req, res) => {
+  itemData
+    .deleteItemById(req.params.id)
+    .then(() => {
+      res.redirect("/items");
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).send("cannot remove category");
     });
 });
 
-// 404 PAGE NOT FOUND
-app.use((req,res)=>{
-    res.status(404).send("404 - Page Not Found")
-})
-
-//INITIALIZE THEN LISTEN
-store_service.initialize().then(()=>{
-    app.listen(HTTP_PORT, () => { 
-        console.log('server listening on: ' + HTTP_PORT); 
+// Get an individual item
+app.get("/items/:id", (req, res) => {
+  itemData
+    .getItemById(req.params.id)
+    .then((data) => {
+      res.json(data);
+    })
+    .catch((err) => {
+      res.json({ message: err });
     });
-}).catch((err)=>{
+});
+
+app.get("/categories", (req, res) => {
+  itemData
+    .getCategories()
+    .then((data) => {
+      if (data.length > 0) res.render("categories", { categories: data });
+      else res.render("categories", { message: "no results" });
+    })
+    .catch((err) => {
+      res.render("categories", { message: "no results" });
+    });
+});
+
+app.get("/categories/add", (req, res) => {
+  res.render("addItem");
+});
+
+app.post("/categories/add", (req, res) => {
+  itemData
+    .addCategory(req.body)
+    .then(() => {
+      res.redirect("/categories");
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).send("cannot add category");
+    });
+});
+
+// DELETE CATEGORY
+app.get("/categories/delete/:id", (req, res) => {
+  itemData
+    .deleteCategoryById(req.params.id)
+    .then(() => {
+      res.redirect("/categories");
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).send("cannot remove category");
+    });
+});
+
+app.get("/shop/:id", async (req, res) => {
+  // Declare an object to store properties for the view
+  let viewData = {};
+
+  try {
+    // declare empty array to hold "item" objects
+    let items = [];
+
+    // if there's a "category" query, filter the returned posts by category
+    if (req.query.category) {
+      // Obtain the published "posts" by category
+      items = await itemData.getPublishedItemsByCategory(req.query.category);
+    } else {
+      // Obtain the published "posts"
+      items = await itemData.getPublishedItems();
+    }
+
+    // sort the published items by postDate
+    items.sort((a, b) => new Date(b.postDate) - new Date(a.postDate));
+
+    // store the "items" and "item" data in the viewData object (to be passed to the view)
+    viewData.items = items;
+  } catch (err) {
+    viewData.message = "no results";
+  }
+
+  try {
+    // Obtain the item by "id"
+    viewData.item = await itemData.getItemById(req.params.id);
+  } catch (err) {
+    viewData.message = "no results";
+  }
+
+  try {
+    // Obtain the full list of "categories"
+    let categories = await itemData.getCategories();
+
+    // store the "categories" data in the viewData object (to be passed to the view)
+    viewData.categories = categories;
+  } catch (err) {
+    viewData.categoriesMessage = "no results";
+  }
+
+  // render the "shop" view with all of the data (viewData)
+  res.render("shop", { data: viewData });
+});
+
+// 404
+app.use((req, res) => {
+  res.status(404).render("404");
+});
+
+/** INITIALIZE **/
+itemData
+  .initialize()
+  .then(() => {
+    app.listen(HTTP_PORT, () => {
+      console.log("server listening on: " + HTTP_PORT);
+    });
+  })
+  .catch((err) => {
     console.log(err);
-})
+  });
