@@ -286,7 +286,7 @@ app.get("/categories", (req, res) => {
 });
 
 app.get("/categories/add", (req, res) => {
-  res.render("addItem");
+  res.render("addCategory");
 });
 
 app.post("/categories/add", (req, res) => {
