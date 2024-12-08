@@ -13,11 +13,13 @@ GitHub Repository URL: https://github.com/aalam333/web322-app.git
 /** REQUIRING MODULES **/
 const express = require("express"); // express
 const itemData = require("./store-service"); // store-service
+const authData = require("./auth-service"); // auth-service
 const path = require("path"); // path
 
 const multer = require("multer"); //multer
 const cloudinary = require("cloudinary").v2; //cloudinary
 const streamifier = require("streamifier"); //streamifier
+const clientSessions = require('client-sessions'); //client sessions
 
 // AS4, Setup handlebars
 const exphbs = require("express-handlebars");
@@ -53,6 +55,29 @@ app.use(function (req, res, next) {
 
   next();
 });
+
+// client sessions 
+app.use(
+  clientSessions({
+    cookieName: 'session', 
+    secret: 'o6LjQ5EVNC28ZgK64hDELM18ScpFQr', 
+    duration: 2 * 60 * 1000, 
+    activeDuration: 1000 * 60, 
+  })
+);
+
+app.use(function(req, res, next) {
+  res.locals.session = req.session;
+  next();
+});
+
+app.use(function ensureLogin(req, res, next) {
+  if (!req.session.user) {
+    res.redirect('/login');
+  } else {
+    next();
+  }
+})
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -153,7 +178,7 @@ app.get("/shop", async (req, res) => {
 });
 
 // Accept queryStrings
-app.get("/items", (req, res) => {
+app.get("/items", ensureLogin, (req, res) => {
   if (req.query.category) {
     itemData
       .getItemsByCategory(req.query.category)
@@ -192,7 +217,7 @@ app.get("/items", (req, res) => {
 });
 
 // A route for items/add
-app.get("/items/add", (req, res) => {
+app.get("/items/add", ensureLogin, (req, res) => {
   itemData
     .getCategories()
     .then((data) => {
@@ -203,7 +228,7 @@ app.get("/items/add", (req, res) => {
     });
 });
 
-app.post("/items/add", upload.single("featureImage"), (req, res) => {
+app.post("/items/add", ensureLogin, upload.single("featureImage"), (req, res) => {
   if (req.file) {
     let streamUpload = (req) => {
       return new Promise((resolve, reject) => {
@@ -249,7 +274,7 @@ app.post("/items/add", upload.single("featureImage"), (req, res) => {
   }
 });
 
-app.get("/items/delete/:id", (req, res) => {
+app.get("/items/delete/:id", ensureLogin, (req, res) => {
   itemData
     .deleteItemById(req.params.id)
     .then(() => {
@@ -262,7 +287,7 @@ app.get("/items/delete/:id", (req, res) => {
 });
 
 // Get an individual item
-app.get("/items/:id", (req, res) => {
+app.get("/items/:id", ensureLogin, (req, res) => {
   itemData
     .getItemById(req.params.id)
     .then((data) => {
@@ -273,7 +298,7 @@ app.get("/items/:id", (req, res) => {
     });
 });
 
-app.get("/categories", (req, res) => {
+app.get("/categories", ensureLogin, (req, res) => {
   itemData
     .getCategories()
     .then((data) => {
@@ -285,11 +310,11 @@ app.get("/categories", (req, res) => {
     });
 });
 
-app.get("/categories/add", (req, res) => {
+app.get("/categories/add", ensureLogin, (req, res) => {
   res.render("addCategory");
 });
 
-app.post("/categories/add", (req, res) => {
+app.post("/categories/add", ensureLogin, (req, res) => {
   itemData
     .addCategory(req.body)
     .then(() => {
@@ -302,7 +327,7 @@ app.post("/categories/add", (req, res) => {
 });
 
 // DELETE CATEGORY
-app.get("/categories/delete/:id", (req, res) => {
+app.get("/categories/delete/:id", ensureLogin, (req, res) => {
   itemData
     .deleteCategoryById(req.params.id)
     .then(() => {
@@ -361,19 +386,53 @@ app.get("/shop/:id", async (req, res) => {
   res.render("shop", { data: viewData });
 });
 
+// LOGIN *NEW*
+app.get("/login", (req, res) => {
+  res.render("login")
+});
+
+app.post("/login", (req, res) => {
+  req.body.userAgent = req.get('User-Agent');
+
+  authData.checkUser(req.body).then((user) => {
+    req.session.user = {
+        userName: user.userName, // authenticated user's userName
+        email: user.email, // authenticated user's email
+        loginHistory: user.loginHistory // authenticated user's loginHistory
+    }
+
+    res.redirect('/items');
+  }).catch((err) => {
+    res.render("login", {errorMessage: err, userName: req.body.userName} )
+  })
+
+})
+
+// REGISTER *NEW*
+app.get("/register", (req, res) => {
+  res.render("register")
+})
+
+app.post("/register", (req, res) => {
+  authData.registerUser(req.body).then(() => {
+    res.render("register", { successMessage: "User created"})
+  }).catch((err) => {
+    res.render("register", {errorMessage: err, userName: req.body.userName} )
+  })
+})
+
 // 404
 app.use((req, res) => {
   res.status(404).render("404");
 });
 
 /** INITIALIZE **/
-itemData
-  .initialize()
-  .then(() => {
-    app.listen(HTTP_PORT, () => {
-      console.log("server listening on: " + HTTP_PORT);
+itemData.initialize()
+.then(authData.initialize)
+.then(function(){
+    app.listen(HTTP_PORT, function(){
+        console.log("app listening on: " + HTTP_PORT)
     });
-  })
-  .catch((err) => {
-    console.log(err);
-  });
+}).catch(function(err){
+    console.log("unable to start server: " + err);
+});
